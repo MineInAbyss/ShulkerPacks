@@ -109,7 +109,7 @@ public class ShulkerListener implements Listener {
                 return;
             }
 
-            if ((player.getInventory() == event.getClickedInventory()) {
+            if ((player.getInventory() == event.getClickedInventory())) {
                 if (!main.canopenininventory || (main.canopenininventory && !player.hasPermission("shulkerpacks.open_in_inventory"))) {
             	    return;
                 }
@@ -200,6 +200,9 @@ public class ShulkerListener implements Listener {
         if (event.getBlockPlaced().getType().toString().contains("SHULKER_BOX")) {
             if (!main.canplaceshulker) {
                 event.setCancelled(true);
+
+                // Open shulker inventory
+                openInventoryIfShulker(event.getItemInHand(), event.getPlayer());
             }
         }
     }
