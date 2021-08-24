@@ -54,8 +54,10 @@ public class ShulkerListener implements Listener {
             }
         }
         for (Player p : closeInventories) {
-            if (event.getInitiator().getLocation().distance(p.getLocation()) < 6) {
-                p.closeInventory();
+            if (event.getInitiator().getLocation() != null && event.getInitiator().getLocation().getWorld() == p.getWorld()) {
+                if (event.getInitiator().getLocation().distance(p.getLocation()) < 6) {
+                    p.closeInventory();
+                }
             }
         }
     }
@@ -110,7 +112,7 @@ public class ShulkerListener implements Listener {
             }
 
             if ((player.getInventory() == event.getClickedInventory())) {
-                if (!main.canopenininventory || (main.canopenininventory && !player.hasPermission("shulkerpacks.open_in_inventory"))) {
+                if (!main.canopenininventory || !player.hasPermission("shulkerpacks.open_in_inventory")) {
             	    return;
                 }
             }
@@ -134,11 +136,12 @@ public class ShulkerListener implements Listener {
             }
 
             if (!main.shiftclicktoopen || event.isShiftClick()) {
+                event.setCancelled(true);
                 if (event.isRightClick() && openInventoryIfShulker(event.getCurrentItem(), player)) {
                     main.fromhand.remove(player);
-                    event.setCancelled(true);
                     return;
                 }
+                event.setCancelled(false);
             }
 
             Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
@@ -282,10 +285,15 @@ public class ShulkerListener implements Listener {
 
                             main.opencontainer.put(player, player.getOpenInventory().getTopInventory());
 
-                            player.openInventory(inv);
-                            player.playSound(player.getLocation(), Sound.BLOCK_SHULKER_BOX_OPEN, main.volume, 1);
-                            main.openshulkers.put(player, item);
-                            main.openinventories.put(player.getUniqueId(), player.getOpenInventory().getTopInventory());
+                            Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
+                                @Override
+                                public void run() {
+                                    player.openInventory(inv);
+                                    player.playSound(player.getLocation(), Sound.BLOCK_SHULKER_BOX_OPEN, main.volume, 1);
+                                    main.openshulkers.put(player, item);
+                                    main.openinventories.put(player.getUniqueId(), player.getOpenInventory().getTopInventory());
+                                }
+                            }, 1);
                             return true;
                         }
                     }
@@ -305,8 +313,10 @@ public class ShulkerListener implements Listener {
                     }
                     if (main.opencontainer.containsKey(p)) {
                         if (main.opencontainer.get(p).getLocation() != null) {
-                            if (main.opencontainer.get(p).getLocation().distance(p.getLocation()) > 6) {
-                                p.closeInventory();
+                            if (main.opencontainer.get(p).getLocation() != null && main.opencontainer.get(p).getLocation().getWorld() == p.getWorld()) {
+                                if (main.opencontainer.get(p).getLocation().distance(p.getLocation()) > 6) {
+                                    p.closeInventory();
+                                }
                             }
                         }
                     }
