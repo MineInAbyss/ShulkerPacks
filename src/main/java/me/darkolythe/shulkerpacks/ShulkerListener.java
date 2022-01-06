@@ -3,7 +3,6 @@ package me.darkolythe.shulkerpacks;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -71,7 +70,7 @@ public class ShulkerListener implements Listener {
     	if (event.isCancelled()) {
     		return;
     	}
-    	
+
         Player player = (Player) event.getWhoClicked();
 
         if (ShulkerPacks.openshulkers.containsKey(player)) {
@@ -180,7 +179,7 @@ public class ShulkerListener implements Listener {
         if (event.getPlayer() instanceof Player) {
             Player player = (Player) event.getPlayer();
             if (saveShulker(player, player.getOpenInventory().getTitle())) {
-                player.playSound(player.getLocation(), Sound.BLOCK_SHULKER_BOX_CLOSE, main.volume, 1);
+                player.playSound(player.getLocation(), "mineinabyss:equipment.backpack.close", main.volume, 1);
                 if (main.openpreviousinv) {
                     openPreviousInventory(player);
                 }
@@ -321,7 +320,7 @@ public class ShulkerListener implements Listener {
                                 @Override
                                 public void run() {
                                     player.openInventory(inv);
-                                    player.playSound(player.getLocation(), Sound.BLOCK_SHULKER_BOX_OPEN, main.volume, 1);
+                                    player.playSound(player.getLocation(), "mineinabyss:equipment.backpack.close", main.volume, 1);
                                     ShulkerPacks.openshulkers.put(player, item);
                                     main.openinventories.put(player, player.getOpenInventory().getTopInventory());
                                 }
