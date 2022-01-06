@@ -228,6 +228,9 @@ public class ShulkerListener implements Listener {
             if (!main.canplaceshulker) {
                 openInventoryIfShulker(event.getItemInHand(), event.getPlayer());
                 event.setCancelled(true);
+
+                // Open shulker inventory
+                openInventoryIfShulker(event.getItemInHand(), event.getPlayer());
             }
         }
     }
