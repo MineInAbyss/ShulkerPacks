@@ -1,6 +1,5 @@
 package me.darkolythe.shulkerpacks;
 
-import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -45,9 +44,6 @@ public final class ShulkerPacks extends JavaPlugin {
         getCommand("shulkerpacks").setExecutor(new CommandReload());
 
         ConfigHandler.loadConfig(this);
-
-        @SuppressWarnings("unused")
-		Metrics metrics = new Metrics(this);
 
         shulkerlistener.checkIfValid();
 
