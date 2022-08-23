@@ -181,7 +181,6 @@ public class ShulkerListener implements Listener {
         if (event.getPlayer() instanceof Player) {
             Player player = (Player) event.getPlayer();
             if (saveShulker(player, player.getOpenInventory().title())) {
-                player.playSound(player.getLocation(), main.shulkerCloseSound, main.volume, 1);
                 if (main.openPreviousInv) {
                     openPreviousInventory(player);
                 }
@@ -195,7 +194,6 @@ public class ShulkerListener implements Listener {
         InventoryType type = main.openContainer.get(player).getType();
         if (type != InventoryType.CRAFTING && type != InventoryType.SHULKER_BOX) {
             Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> {
-                player.playSound(player.getLocation(), main.shulkerCloseSound, main.volume, 1);
                 player.openInventory(main.openContainer.get(player));
                 main.openContainer.remove(player);
             }, 1);
@@ -215,7 +213,6 @@ public class ShulkerListener implements Listener {
                     if (main.canOpenInAir && player.hasPermission("shulkerpacks.open_in_air")) {
                         ItemStack item = event.getItem();
                         openInventoryIfShulker(item, event.getPlayer());
-                        player.playSound(player.getLocation(), main.shulkerOpenSound, main.volume, 1);
                         main.fromHand.put(player, true);
                     }
                 }
@@ -232,7 +229,6 @@ public class ShulkerListener implements Listener {
 
                 // Open shulker inventory
                 openInventoryIfShulker(event.getItemInHand(), event.getPlayer());
-                event.getPlayer().playSound(event.getPlayer().getLocation(), main.shulkerOpenSound, main.volume, 1);
             }
         }
     }
@@ -274,6 +270,7 @@ public class ShulkerListener implements Listener {
                 } else if (ShulkerPacks.openShulkers.get(player).hasItemMeta() && ShulkerPacks.openShulkers.get(player).getItemMeta().hasDisplayName()) {
                     ShulkerPacks.openShulkers.get(player).getItemMeta().displayName();
                 }
+                player.playSound(player.getLocation(), main.shulkerCloseSound, main.volume, 1);
             }
         } catch (Exception e) {
             ShulkerPacks.openShulkers.remove(player);
@@ -323,7 +320,7 @@ public class ShulkerListener implements Listener {
 
                             Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> {
                                 player.openInventory(inv);
-                                player.playSound(player.getLocation(), main.shulkerCloseSound, main.volume, 1);
+                                player.playSound(player.getLocation(), main.shulkerOpenSound, main.volume, 1);
                                 ShulkerPacks.openShulkers.put(player, item);
                                 main.openInventories.put(player, player.getOpenInventory().getTopInventory());
                             }, 1);
