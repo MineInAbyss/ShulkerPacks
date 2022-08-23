@@ -1,5 +1,7 @@
 package me.darkolythe.shulkerpacks;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -15,21 +17,23 @@ public final class ShulkerPacks extends JavaPlugin {
 
     private static ShulkerPacks plugin;
 
-    String prefix = ChatColor.WHITE.toString() + ChatColor.BOLD.toString() + "[" + ChatColor.BLUE.toString() + "ShulkerPacks" + ChatColor.WHITE.toString() + ChatColor.BOLD.toString() + "] ";
+    String prefix = ChatColor.WHITE + ChatColor.BOLD.toString() + "[" + ChatColor.BLUE + "ShulkerPacks" + ChatColor.WHITE + ChatColor.BOLD + "] ";
 
-    static Map<Player, ItemStack> openshulkers = new HashMap<>();
-    Map<Player, Boolean> fromhand = new HashMap<>();
-    Map<Player, Inventory> openinventories = new HashMap<>();
-    Map<Player, Inventory> opencontainer = new HashMap<>();
-    private Map<Player, Long> pvp_timer = new HashMap<>();
-    boolean canopeninchests = true;
-    boolean openpreviousinv = false;
+    static Map<Player, ItemStack> openShulkers = new HashMap<>();
+    Map<Player, Boolean> fromHand = new HashMap<>();
+    Map<Player, Inventory> openInventories = new HashMap<>();
+    Map<Player, Inventory> openContainer = new HashMap<>();
+    private final Map<Player, Long> pvpTimer = new HashMap<>();
+    boolean canOpenInChests = true;
+    boolean openPreviousInv = false;
     List<String> blacklist = new ArrayList<>();
-    String defaultname = ChatColor.BLUE + "Shulker Pack";
-    boolean pvp_timer_enabled = false;
-    boolean shiftclicktoopen = false;
-    boolean canopeninenderchest, canopeninbarrels, canplaceshulker, canopenininventory, canopeninair;
+    Component defaultName = MiniMessage.miniMessage().deserialize("<blue>Shulker Pack");
+    boolean pvpTimerEnabled = false;
+    boolean shiftClickToOpen = false;
+    boolean canOpenInEnderChest, canOpenInBarrels, canPlaceShulker, canOpenInInventory, canOpenInAir;
     float volume;
+    String shulkerOpenSound = "minecraft:entity.shulker.open";
+    String shulkerCloseSound = "minecraft:entity.shulker.close";
 
     /*
     Sets up the plugin
@@ -41,23 +45,21 @@ public final class ShulkerPacks extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(shulkerlistener, this);
 
-        getCommand("shulkerpacks").setExecutor(new CommandReload());
+        Objects.requireNonNull(getCommand("shulkerpacks")).setExecutor(new CommandReload());
 
         ConfigHandler.loadConfig(this);
 
         shulkerlistener.checkIfValid();
-
         getLogger().log(Level.INFO, (prefix + ChatColor.GREEN + "ShulkerPacks has been enabled!"));
     }
 
     /*
-    Doesnt do much. Just says a message
+    Doesn't do much. Just says a message
      */
     @Override
     public void onDisable() {
-        Iterator<Player> it = this.openinventories.keySet().iterator();
-        while (it.hasNext()) {
-            it.next().closeInventory();
+        for (Player player : this.openInventories.keySet()) {
+            player.closeInventory();
         }
         getLogger().log(Level.INFO, (prefix + ChatColor.RED + "ShulkerPacks has been disabled!"));
     }
@@ -69,15 +71,15 @@ public final class ShulkerPacks extends JavaPlugin {
 
 
     public boolean getPvpTimer(Player player) {
-        if (pvp_timer.containsKey(player)) {
-            return System.currentTimeMillis() - pvp_timer.get(player) < 7000;
+        if (pvpTimer.containsKey(player)) {
+            return System.currentTimeMillis() - pvpTimer.get(player) < 7000;
         }
         return false;
     }
 
     public void setPvpTimer(Player player) {
-        if (pvp_timer_enabled) {
-            pvp_timer.put(player, System.currentTimeMillis());
+        if (pvpTimerEnabled) {
+            pvpTimer.put(player, System.currentTimeMillis());
         }
     }
 }
