@@ -255,7 +255,9 @@ public class ShulkerListener implements Listener {
     public boolean saveShulker(Player player, Component title) {
         try {
             if (ShulkerPacks.openShulkers.containsKey(player)) {
-                if (title == main.defaultName) {
+                if (title.equals(main.defaultName) || (ShulkerPacks.openShulkers.get(player).hasItemMeta() &&
+                        ShulkerPacks.openShulkers.get(player).getItemMeta().hasDisplayName() &&
+                        (Objects.equals(ShulkerPacks.openShulkers.get(player).getItemMeta().displayName(), title)))) {
                     ItemStack item = ShulkerPacks.openShulkers.get(player);
                     if (item != null) {
                         BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
@@ -267,10 +269,7 @@ public class ShulkerListener implements Listener {
                         updateAllInventories(ShulkerPacks.openShulkers.get(player));
                         return true;
                     }
-                } else if (ShulkerPacks.openShulkers.get(player).hasItemMeta() && ShulkerPacks.openShulkers.get(player).getItemMeta().hasDisplayName()) {
-                    ShulkerPacks.openShulkers.get(player).getItemMeta().displayName();
                 }
-                player.playSound(player.getLocation(), main.shulkerCloseSound, main.volume, 1);
             }
         } catch (Exception e) {
             ShulkerPacks.openShulkers.remove(player);
