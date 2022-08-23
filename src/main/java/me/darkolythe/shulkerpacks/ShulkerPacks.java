@@ -2,6 +2,8 @@ package me.darkolythe.shulkerpacks;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -16,7 +18,8 @@ public final class ShulkerPacks extends JavaPlugin {
     ShulkerListener shulkerlistener;
 
     private static ShulkerPacks plugin;
-
+    LegacyComponentSerializer legacySerializer = LegacyComponentSerializer.legacy('§');
+    PlainTextComponentSerializer plainSerializer = PlainTextComponentSerializer.plainText();
     String prefix = ChatColor.WHITE + ChatColor.BOLD.toString() + "[" + ChatColor.BLUE + "ShulkerPacks" + ChatColor.WHITE + ChatColor.BOLD + "] ";
 
     static Map<Player, ItemStack> openShulkers = new HashMap<>();
@@ -40,6 +43,7 @@ public final class ShulkerPacks extends JavaPlugin {
      */
     @Override
     public void onEnable() {
+
         plugin = this;
         shulkerlistener = new ShulkerListener(this);
 
@@ -50,7 +54,7 @@ public final class ShulkerPacks extends JavaPlugin {
         ConfigHandler.loadConfig(this);
 
         shulkerlistener.checkIfValid();
-        getLogger().log(Level.INFO, (prefix + ChatColor.GREEN + "ShulkerPacks has been enabled!"));
+        getLogger().log(Level.INFO, plainSerializer.serialize(legacySerializer.deserialize(prefix + ChatColor.GREEN + "ShulkerPacks has been enabled!")));
     }
 
     /*
@@ -61,7 +65,7 @@ public final class ShulkerPacks extends JavaPlugin {
         for (Player player : this.openInventories.keySet()) {
             player.closeInventory();
         }
-        getLogger().log(Level.INFO, (prefix + ChatColor.RED + "ShulkerPacks has been disabled!"));
+        getLogger().log(Level.INFO, plainSerializer.serialize(legacySerializer.deserialize(prefix + ChatColor.RED + "ShulkerPacks has been disabled!")));
     }
 
 
