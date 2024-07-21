@@ -71,12 +71,8 @@ public class ShulkerListener implements Listener {
     /*
     Opens the shulker if its not in a weird inventory, then saves it
      */
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         Player player = (Player) event.getWhoClicked();
 
         if (ShulkerPacks.openShulkers.containsKey(player)) {
@@ -168,11 +164,8 @@ public class ShulkerListener implements Listener {
 
     // Deals with multiple people opening the same shulker
     private static boolean checkIfOpen(ItemStack shulker) {
-        for (ItemStack i : ShulkerPacks.openShulkers.values()) {
-            if (i.equals(shulker)) {
-                return true;
-            }
-        }
+        for (ItemStack i : ShulkerPacks.openShulkers.values())
+            if (i.isSimilar(shulker)) return true;
         return false;
     }
 
@@ -181,12 +174,9 @@ public class ShulkerListener implements Listener {
      */
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getPlayer() instanceof Player) {
-            Player player = (Player) event.getPlayer();
+        if (event.getPlayer() instanceof Player player) {
             if (saveShulker(player, player.getOpenInventory().title())) {
-                if (main.openPreviousInv) {
-                    openPreviousInventory(player);
-                }
+                if (main.openPreviousInv) openPreviousInventory(player);
             }
             ShulkerPacks.openShulkers.remove(player);
         }
@@ -210,58 +200,42 @@ public class ShulkerListener implements Listener {
     @EventHandler
     public void onClickAir(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        if (main.canOpenInAir && (event.getClickedBlock() == null || event.getClickedBlock().getType() == Material.AIR)) {
-            if ((!main.shiftClickToOpen || player.isSneaking())) {
-                if (event.getAction() == Action.RIGHT_CLICK_AIR) {
-                    if (main.canOpenInAir && player.hasPermission("shulkerpacks.open_in_air")) {
-                        ItemStack item = event.getItem();
-                        openInventoryIfShulker(item, event.getPlayer());
-                        main.fromHand.put(player, true);
-                    }
-                }
-            }
-        }
+        if (!main.canOpenInAir || event.getAction() != Action.RIGHT_CLICK_AIR) return;
+        if ((main.shiftClickToOpen && !player.isSneaking())) return;
+        if (!main.canOpenInAir || !player.hasPermission("shulkerpacks.open_in_air")) return;
+
+        openInventoryIfShulker(event.getItem(), player);
+        main.fromHand.put(player, true);
     }
+
     @EventHandler
-    public void PlayerInteractEvent(PlayerInteractEvent event){
+    public void onPlaceInteractShulker(PlayerInteractEvent event){
         Block block = event.getClickedBlock();
         ItemStack itemStack= event.getItem();
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) return;
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
-        if (block != null && Tag.SHULKER_BOXES.isTagged(block.getType()) && !main.canPlaceShulker) {
+        if (block != null && Tag.SHULKER_BOXES.isTagged(block.getType()) && !main.canPlaceShulker)
             event.setCancelled(true);
-        } else if (itemStack != null && Tag.SHULKER_BOXES.isTagged(itemStack.getType()) && !main.canPlaceShulker) {
+
+        if (itemStack != null && Tag.SHULKER_BOXES.isTagged(itemStack.getType()) && !main.canPlaceShulker) {
             event.setCancelled(true);
-            openInventoryIfShulker(event.getItem() , event.getPlayer());
-        }
-    }
-
-    @EventHandler
-    public void onShulkerPlace(BlockPlaceEvent event) {
-        if (event.getBlockPlaced().getType().toString().contains("SHULKER_BOX")) {
-            if (!main.canPlaceShulker) {
-                openInventoryIfShulker(event.getItemInHand(), event.getPlayer());
-                event.setCancelled(true);
-
-                // Open shulker inventory
-                openInventoryIfShulker(event.getItemInHand(), event.getPlayer());
-            }
+            openInventoryIfShulker(itemStack, event.getPlayer());
         }
     }
 
     @EventHandler
     public void onPlayerHit(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Player && event.getEntity() instanceof Player) {
-            main.setPvpTimer((Player) event.getDamager());
-            main.setPvpTimer((Player) event.getEntity());
+        if (event.getDamager() instanceof Player damager && event.getEntity() instanceof Player player) {
+            main.setPvpTimer(damager);
+            main.setPvpTimer(player);
         }
     }
 
     @EventHandler
     public void onPlayerShoot(ProjectileHitEvent event) {
-        if (event.getHitEntity() instanceof Player && event.getEntity().getShooter() instanceof Player) {
-            main.setPvpTimer((Player) event.getEntity().getShooter());
-            main.setPvpTimer((Player) event.getHitEntity());
+        if (event.getHitEntity() instanceof Player hitEntity && event.getEntity().getShooter() instanceof Player shooter) {
+            main.setPvpTimer(shooter);
+            main.setPvpTimer(hitEntity);
         }
     }
 
