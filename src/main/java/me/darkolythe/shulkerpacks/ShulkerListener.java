@@ -232,7 +232,7 @@ public class ShulkerListener implements Listener {
             event.setCancelled(true);
         } else if (itemStack != null && Tag.SHULKER_BOXES.isTagged(itemStack.getType()) && !main.canPlaceShulker) {
             event.setCancelled(true);
-            openInventoryIfShulker(event.getItem(), event.getPlayer());
+            openInventoryIfShulker(event.getItem() , event.getPlayer());
         }
     }
 
