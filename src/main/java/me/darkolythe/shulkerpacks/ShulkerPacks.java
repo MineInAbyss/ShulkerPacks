@@ -54,6 +54,7 @@ public final class ShulkerPacks extends JavaPlugin {
         ConfigHandler.loadConfig(this);
 
         shulkerlistener.checkIfValid();
+
         getLogger().log(Level.INFO, plainSerializer.serialize(legacySerializer.deserialize(prefix + ChatColor.GREEN + "ShulkerPacks has been enabled!")));
     }
 
