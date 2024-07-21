@@ -7,7 +7,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.block.ShulkerBox;
+
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,6 +22,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -217,6 +220,19 @@ public class ShulkerListener implements Listener {
                     }
                 }
             }
+        }
+    }
+    @EventHandler
+    public void PlayerInteractEvent(PlayerInteractEvent event){
+        Block block = event.getClickedBlock();
+        ItemStack itemStack= event.getItem();
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) return;
+
+        if (block != null && Tag.SHULKER_BOXES.isTagged(block.getType()) && !main.canPlaceShulker) {
+            event.setCancelled(true);
+        } else if (itemStack != null && Tag.SHULKER_BOXES.isTagged(itemStack.getType()) && !main.canPlaceShulker) {
+            event.setCancelled(true);
+            openInventoryIfShulker(event.getItem(), event.getPlayer());
         }
     }
 
