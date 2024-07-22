@@ -11,6 +11,7 @@ canOpenInChests: true         #false will prevent users from opening shulkerboxe
 canOpenInEnderChest: true     #false will prevent users from opening shulkerboxes in enderchests
 canOpenInBarrels: true        #false will prevent users from opening shulkerboxes in barrels
 canPlaceShulker: true         #false will prevent users from placing shulkerboxes by accident
+allowMultiplePlayers: false   # false will prevent users from opening a shulkerbox if another player has it open
 
 #true will prevent users from opening shulkerboxes within 7 seconds of being hit by a player
 disableInCombat: false

@@ -76,6 +76,7 @@ public class ShulkerListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         Player player = (Player) event.getWhoClicked();
         @Nullable Inventory clickedInventory = event.getClickedInventory();
+        ItemStack currentItem = event.getCurrentItem();
 
         if (ShulkerPacks.openShulkers.containsKey(player)) {
             if (ShulkerPacks.openShulkers.get(player).getType() == Material.AIR) {
@@ -86,14 +87,14 @@ public class ShulkerListener implements Listener {
         }
 
         //cancels the event if the player is trying to remove an open shulker
-        if (checkIfOpen(event.getCurrentItem()) && event.getClick() != ClickType.RIGHT) {
+        if (checkIfOpen(currentItem) && (!main.allowMultiplePlayers || event.getClick() != ClickType.RIGHT)) {
             event.setCancelled(true);
             return;
         }
 
         if (clickedInventory == null) return;
 
-        if (event.getCurrentItem() != null && (ShulkerPacks.openShulkers.containsKey(player) && event.getCurrentItem().isSimilar(ShulkerPacks.openShulkers.get(player)))) {
+        if (currentItem != null && (ShulkerPacks.openShulkers.containsKey(player) && currentItem.isSimilar(ShulkerPacks.openShulkers.get(player)))) {
             event.setCancelled(true);
             return;
         }

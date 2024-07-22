@@ -33,7 +33,7 @@ public final class ShulkerPacks extends JavaPlugin {
     Component defaultName = MiniMessage.miniMessage().deserialize("<blue>Shulker Pack");
     boolean pvpTimerEnabled = false;
     boolean shiftClickToOpen = false;
-    boolean canOpenInEnderChest, canOpenInBarrels, canPlaceShulker, canOpenInInventory, canOpenInAir;
+    boolean canOpenInEnderChest, canOpenInBarrels, canPlaceShulker, canOpenInInventory, canOpenInAir, allowMultiplePlayers;
     float volume;
     String shulkerOpenSound = "minecraft:entity.shulker.open";
     String shulkerCloseSound = "minecraft:entity.shulker.close";

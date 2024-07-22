@@ -19,6 +19,7 @@ public class ConfigHandler {
         main.canPlaceShulker = config.getBoolean("canPlaceShulker", true);
         main.blacklist = config.getStringList("blacklistedInventories");
         main.canOpenInAir = config.getBoolean("canOpenInAir", true);
+        main.allowMultiplePlayers = config.getBoolean("allowMultiplePlayers", true);
         main.openPreviousInv = config.getBoolean("openPreviousInventory", false);
         main.volume = (float) config.getDouble("shulkerVolume", 1.0);
         main.shulkerOpenSound = config.getString("shulkerOpenSound", "minecraft:entity.shulker.open");
