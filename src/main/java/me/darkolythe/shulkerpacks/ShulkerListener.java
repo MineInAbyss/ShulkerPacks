@@ -14,19 +14,19 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.Tag;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class ShulkerListener implements Listener {
 
@@ -41,8 +41,7 @@ public class ShulkerListener implements Listener {
      */
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (event.getWhoClicked() instanceof Player) {
-            Player player = (Player) event.getWhoClicked();
+        if (event.getWhoClicked() instanceof Player player) {
             Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> {
                 if (!saveShulker(player, event.getView().title())) {
                     event.setCancelled(true);
@@ -54,11 +53,13 @@ public class ShulkerListener implements Listener {
     @EventHandler
     public void onInventoryMoveItem(InventoryMoveItemEvent event) {
         List<Player> closeInventories = new ArrayList<>();
+
         for (Player p : ShulkerPacks.openShulkers.keySet()) {
-            if (ShulkerPacks.openShulkers.get(p).equals(event.getItem())) {
+            if (ShulkerPacks.openShulkers.get(p).isSimilar(event.getItem())) {
                 closeInventories.add(p);
             }
         }
+
         for (Player p : closeInventories) {
             if (event.getInitiator().getLocation() != null && event.getInitiator().getLocation().getWorld() == p.getWorld()) {
                 if (event.getInitiator().getLocation().distance(p.getLocation()) < 6) {
@@ -74,6 +75,7 @@ public class ShulkerListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
         Player player = (Player) event.getWhoClicked();
+        @Nullable Inventory clickedInventory = event.getClickedInventory();
 
         if (ShulkerPacks.openShulkers.containsKey(player)) {
             if (ShulkerPacks.openShulkers.get(player).getType() == Material.AIR) {
@@ -83,83 +85,67 @@ public class ShulkerListener implements Listener {
             }
         }
 
-        if (checkIfOpen(event.getCurrentItem())) { //cancels the event if the player is trying to remove an open shulker
-            if (event.getClick() != ClickType.RIGHT) {
-                event.setCancelled(true);
-                return;
-            }
+        //cancels the event if the player is trying to remove an open shulker
+        if (checkIfOpen(event.getCurrentItem()) && event.getClick() != ClickType.RIGHT) {
+            event.setCancelled(true);
+            return;
         }
 
-        if (event.getWhoClicked() instanceof Player && event.getClickedInventory() != null) {
-            if (event.getCurrentItem() != null && (ShulkerPacks.openShulkers.containsKey(player) && event.getCurrentItem().equals(ShulkerPacks.openShulkers.get(player)))) {
-                event.setCancelled(true);
-                return;
-            }
+        if (clickedInventory == null) return;
 
-            // prevent the player from opening it in a chest if they have no permission
-            if (event.getClickedInventory() != null && (event.getClickedInventory().getType() == InventoryType.CHEST)) {
-                if (!main.canOpenInChests || !player.hasPermission("shulkerpacks.open_in_chests")) {
-                    return;
-                }
-            }
-
-            // prevent the player from opening the shulkerbox in inventories without storage slots
-            String typeStr = event.getClickedInventory().getType().toString();
-            InventoryType type = event.getClickedInventory().getType();
-            if (typeStr.equals("WORKBENCH") || typeStr.equals("ANVIL") || typeStr.equals("BEACON") || typeStr.equals("MERCHANT") || typeStr.equals("ENCHANTING") ||
-                    typeStr.equals("GRINDSTONE") || typeStr.equals("CARTOGRAPHY") || typeStr.equals("LOOM") || typeStr.equals("STONECUTTER")) {
-                return;
-            }
-
-            // prevent the player from opening it in the crafting slots of their inventory
-            if (type == InventoryType.CRAFTING && event.getRawSlot() >= 1 && event.getRawSlot() <= 4) {
-                return;
-            }
-
-            // prevent the player from opening it in the inventory if they have no permission
-            if ((player.getInventory() == event.getClickedInventory())) {
-                if (!main.canOpenInInventory || !player.hasPermission("shulkerpacks.open_in_inventory")) {
-                    return;
-                }
-            }
-
-            // prevent the player from opening the shulkerbox in the result slot of an inventory (this can be done with dyes)
-            if (event.getSlotType() == InventoryType.SlotType.RESULT) {
-                return;
-            }
-
-            if (event.getClickedInventory() != null && event.getClickedInventory().getHolder() != null && event.getClickedInventory().getHolder().getClass().toString().endsWith(".CraftBarrel") && !main.canOpenInBarrels) {
-                return;
-            }
-
-            if (!main.canOpenInEnderChest && type == InventoryType.ENDER_CHEST) {
-                return;
-            }
-
-            for (String str : main.blacklist) {
-                PlainTextComponentSerializer plainText = PlainTextComponentSerializer.plainText();
-                LegacyComponentSerializer legacy = LegacyComponentSerializer.legacy('§');
-                if (plainText.serialize(player.getOpenInventory().title()).equals(plainText.serialize(legacy.deserialize(str)))) {
-                    return;
-                }
-            }
-
-            if (!main.shiftClickToOpen || event.isShiftClick()) {
-                boolean isCancelled = event.isCancelled();
-                event.setCancelled(true);
-                if (event.isRightClick() && openInventoryIfShulker(event.getCurrentItem(), player)) {
-                    main.fromHand.remove(player);
-                    return;
-                }
-                event.setCancelled(isCancelled);
-            }
-
-            Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> {
-                if (!saveShulker(player, event.getView().title())) {
-                    event.setCancelled(true);
-                }
-            }, 1);
+        if (event.getCurrentItem() != null && (ShulkerPacks.openShulkers.containsKey(player) && event.getCurrentItem().isSimilar(ShulkerPacks.openShulkers.get(player)))) {
+            event.setCancelled(true);
+            return;
         }
+
+        // prevent the player from opening it in a chest if they have no permission
+        if (clickedInventory.getType() == InventoryType.CHEST && !main.canOpenInChests || !player.hasPermission("shulkerpacks.open_in_chests"))
+            return;
+
+        // prevent the player from opening the shulkerbox in inventories without storage slots
+        String typeStr = clickedInventory.getType().toString();
+        InventoryType type = clickedInventory.getType();
+        if (typeStr.equals("WORKBENCH") || typeStr.equals("ANVIL") || typeStr.equals("BEACON") || typeStr.equals("MERCHANT") || typeStr.equals("ENCHANTING") ||
+                typeStr.equals("GRINDSTONE") || typeStr.equals("CARTOGRAPHY") || typeStr.equals("LOOM") || typeStr.equals("STONECUTTER"))
+            return;
+
+        // prevent the player from opening it in the crafting slots of their inventory
+        if (type == InventoryType.CRAFTING && event.getRawSlot() >= 1 && event.getRawSlot() <= 4) return;
+
+        // prevent the player from opening it in the inventory if they have no permission
+        if ((player.getInventory() == clickedInventory) && !main.canOpenInInventory || !player.hasPermission("shulkerpacks.open_in_inventory"))
+            return;
+
+        // prevent the player from opening the shulkerbox in the result slot of an inventory (this can be done with dyes)
+        if (event.getSlotType() == InventoryType.SlotType.RESULT) return;
+
+        if (clickedInventory.getHolder() != null && clickedInventory.getHolder().getClass().toString().endsWith(".CraftBarrel") && !main.canOpenInBarrels)
+            return;
+
+        if (!main.canOpenInEnderChest && type == InventoryType.ENDER_CHEST) return;
+
+        for (String str : main.blacklist) {
+            PlainTextComponentSerializer plainText = PlainTextComponentSerializer.plainText();
+            LegacyComponentSerializer legacy = LegacyComponentSerializer.legacy('§');
+            if (plainText.serialize(player.getOpenInventory().title()).equals(plainText.serialize(legacy.deserialize(str))))
+                return;
+        }
+
+        if (!main.shiftClickToOpen || event.isShiftClick()) {
+            boolean isCancelled = event.isCancelled();
+            event.setCancelled(true);
+            if (event.isRightClick() && openInventoryIfShulker(event.getCurrentItem(), player)) {
+                main.fromHand.remove(player);
+                return;
+            }
+            event.setCancelled(isCancelled);
+        }
+
+        Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> {
+            if (!saveShulker(player, event.getView().title())) {
+                event.setCancelled(true);
+            }
+        }, 1);
     }
 
     // Deals with multiple people opening the same shulker
@@ -175,9 +161,8 @@ public class ShulkerListener implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player player) {
-            if (saveShulker(player, player.getOpenInventory().title())) {
-                if (main.openPreviousInv) openPreviousInventory(player);
-            }
+            if (saveShulker(player, player.getOpenInventory().title()) && main.openPreviousInv)
+                openPreviousInventory(player);
             ShulkerPacks.openShulkers.remove(player);
         }
     }
@@ -185,12 +170,12 @@ public class ShulkerListener implements Listener {
 
     private void openPreviousInventory(Player player) {
         InventoryType type = main.openContainer.get(player).getType();
-        if (type != InventoryType.CRAFTING && type != InventoryType.SHULKER_BOX) {
-            Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> {
-                player.openInventory(main.openContainer.get(player));
-                main.openContainer.remove(player);
-            }, 1);
-        }
+        if (type == InventoryType.CRAFTING || type == InventoryType.SHULKER_BOX) return;
+
+        Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> {
+            player.openInventory(main.openContainer.get(player));
+            main.openContainer.remove(player);
+        }, 1);
     }
 
 
@@ -209,9 +194,9 @@ public class ShulkerListener implements Listener {
     }
 
     @EventHandler
-    public void onPlaceInteractShulker(PlayerInteractEvent event){
+    public void onPlaceInteractShulker(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
-        ItemStack itemStack= event.getItem();
+        ItemStack itemStack = event.getItem();
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
         if (block != null && Tag.SHULKER_BOXES.isTagged(block.getType()) && !main.canPlaceShulker)
@@ -244,22 +229,29 @@ public class ShulkerListener implements Listener {
      */
     public boolean saveShulker(Player player, Component title) {
         try {
-            if (ShulkerPacks.openShulkers.containsKey(player)) {
-                if (title.equals(main.defaultName) || (ShulkerPacks.openShulkers.get(player).hasItemMeta() &&
-                        ShulkerPacks.openShulkers.get(player).getItemMeta().hasDisplayName() &&
-                        (Objects.equals(ShulkerPacks.openShulkers.get(player).getItemMeta().displayName(), title)))) {
-                    ItemStack item = ShulkerPacks.openShulkers.get(player);
-                    if (item != null) {
-                        BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
-                        ShulkerBox shulker = (ShulkerBox) meta.getBlockState();
-                        shulker.getInventory().setContents(main.openInventories.get(player).getContents());
-                        meta.setBlockState(shulker);
-                        item.setItemMeta(meta);
-                        ShulkerPacks.openShulkers.put(player, item);
-                        updateAllInventories(ShulkerPacks.openShulkers.get(player));
-                        return true;
-                    }
+            ItemStack item = ShulkerPacks.openShulkers.get(player);
+            if (item == null) return false;
+
+            Component itemTitle = main.defaultName;
+            try {
+                if (item.hasItemMeta()) {
+                    if (item.getItemMeta().hasDisplayName())
+                        itemTitle = item.displayName();
+                    else if (item.getItemMeta().hasItemName())
+                        itemTitle = item.getItemMeta().itemName();
                 }
+            } catch (Exception ignored) {
+            }
+
+            if (title.equals(itemTitle)) {
+                BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
+                ShulkerBox shulker = (ShulkerBox) meta.getBlockState();
+                shulker.getInventory().setContents(main.openInventories.get(player).getContents());
+                meta.setBlockState(shulker);
+                item.setItemMeta(meta);
+                ShulkerPacks.openShulkers.put(player, item);
+                updateAllInventories(ShulkerPacks.openShulkers.get(player));
+                return true;
             }
         } catch (Exception e) {
             ShulkerPacks.openShulkers.remove(player);
@@ -271,7 +263,7 @@ public class ShulkerListener implements Listener {
 
     private void updateAllInventories(ItemStack item) {
         for (Player p : ShulkerPacks.openShulkers.keySet()) {
-            if (ShulkerPacks.openShulkers.get(p).equals(item)) {
+            if (ShulkerPacks.openShulkers.get(p).isSimilar(item)) {
                 BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
                 ShulkerBox shulker = (ShulkerBox) meta.getBlockState();
                 p.getOpenInventory().getTopInventory().setContents(shulker.getInventory().getContents());
@@ -284,39 +276,32 @@ public class ShulkerListener implements Listener {
     Opens the shulker inventory with the contents of the shulker
      */
     public boolean openInventoryIfShulker(ItemStack item, Player player) {
-        if (player.hasPermission("shulkerpacks.use")) {
-            if (item != null) {
-                if (item.getAmount() == 1 && item.getType().toString().contains("SHULKER")) {
+        if (player.hasPermission("shulkerpacks.use") && item != null && Tag.SHULKER_BOXES.isTagged(item.getType())) {
+            if (main.getPvpTimer(player)) {
+                player.sendMessage(main.prefix + ChatColor.RED + "You cannot open shulkerboxes in combat!");
+                return false;
+            }
 
-                    if (main.getPvpTimer(player)) {
-                        player.sendMessage(main.prefix + ChatColor.RED + "You cannot open shulkerboxes in combat!");
-                        return false;
-                    }
-
-                    if (item.getItemMeta() instanceof BlockStateMeta) {
-                        BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
-                        if (meta != null && meta.getBlockState() instanceof ShulkerBox) {
-                            ShulkerBox shulker = (ShulkerBox) meta.getBlockState();
-                            Inventory inv;
-                            if (meta.hasDisplayName()) {
-                                inv = Bukkit.createInventory(null, InventoryType.SHULKER_BOX, Objects.requireNonNull(meta.displayName()));
-                            } else {
-                                inv = Bukkit.createInventory(null, InventoryType.SHULKER_BOX, main.defaultName);
-                            }
-                            inv.setContents(shulker.getInventory().getContents());
-
-                            main.openContainer.put(player, player.getOpenInventory().getTopInventory());
-
-                            Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> {
-                                player.openInventory(inv);
-                                player.playSound(player.getLocation(), main.shulkerOpenSound, main.volume, 1);
-                                ShulkerPacks.openShulkers.put(player, item);
-                                main.openInventories.put(player, player.getOpenInventory().getTopInventory());
-                            }, 1);
-                            return true;
-                        }
-                    }
+            if (item.getItemMeta() instanceof BlockStateMeta blockStateMeta && blockStateMeta.getBlockState() instanceof ShulkerBox shulker) {
+                Component invTitle = main.defaultName;
+                try {
+                    if (blockStateMeta.hasDisplayName()) invTitle = blockStateMeta.displayName();
+                    else if (blockStateMeta.hasItemName()) invTitle = blockStateMeta.itemName();
+                } catch (Exception ignored) {
                 }
+
+                Inventory inv = Bukkit.createInventory(null, InventoryType.SHULKER_BOX, invTitle);
+                inv.setContents(shulker.getInventory().getContents());
+
+                main.openContainer.put(player, player.getOpenInventory().getTopInventory());
+
+                Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> {
+                    player.openInventory(inv);
+                    player.playSound(player.getLocation(), main.shulkerOpenSound, main.volume, 1);
+                    ShulkerPacks.openShulkers.put(player, item);
+                    main.openInventories.put(player, player.getOpenInventory().getTopInventory());
+                }, 1);
+                return true;
             }
         }
         return false;
