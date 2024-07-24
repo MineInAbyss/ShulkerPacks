@@ -233,17 +233,7 @@ public class ShulkerListener implements Listener {
             ItemStack item = ShulkerPacks.openShulkers.get(player);
             if (item == null) return false;
 
-            Component itemTitle = main.defaultName;
-            try {
-                if (item.hasItemMeta()) {
-                    if (item.getItemMeta().hasDisplayName())
-                        itemTitle = item.displayName();
-                    else if (item.getItemMeta().hasItemName())
-                        itemTitle = item.getItemMeta().itemName();
-                }
-            } catch (Exception ignored) {
-            }
-
+            Component itemTitle = item.hasItemMeta() && item.getItemMeta().hasDisplayName() ? item.getItemMeta().displayName() : main.defaultName;
             if (title.equals(itemTitle)) {
                 BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
                 ShulkerBox shulker = (ShulkerBox) meta.getBlockState();
@@ -251,7 +241,7 @@ public class ShulkerListener implements Listener {
                 meta.setBlockState(shulker);
                 item.setItemMeta(meta);
                 ShulkerPacks.openShulkers.put(player, item);
-                updateAllInventories(ShulkerPacks.openShulkers.get(player));
+                updateAllInventories(item);
                 return true;
             }
         } catch (Exception e) {
@@ -264,12 +254,11 @@ public class ShulkerListener implements Listener {
 
     private void updateAllInventories(ItemStack item) {
         for (Player p : ShulkerPacks.openShulkers.keySet()) {
-            if (ShulkerPacks.openShulkers.get(p).isSimilar(item)) {
-                BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
-                ShulkerBox shulker = (ShulkerBox) meta.getBlockState();
-                p.getOpenInventory().getTopInventory().setContents(shulker.getInventory().getContents());
-                p.updateInventory();
-            }
+            if (!ShulkerPacks.openShulkers.get(p).isSimilar(item)) continue;
+            BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
+            ShulkerBox shulker = (ShulkerBox) meta.getBlockState();
+            p.getOpenInventory().getTopInventory().setContents(shulker.getInventory().getContents());
+            p.updateInventory();
         }
     }
 
@@ -284,12 +273,7 @@ public class ShulkerListener implements Listener {
             }
 
             if (item.getItemMeta() instanceof BlockStateMeta blockStateMeta && blockStateMeta.getBlockState() instanceof ShulkerBox shulker) {
-                Component invTitle = main.defaultName;
-                try {
-                    if (blockStateMeta.hasDisplayName()) invTitle = blockStateMeta.displayName();
-                    else if (blockStateMeta.hasItemName()) invTitle = blockStateMeta.itemName();
-                } catch (Exception ignored) {
-                }
+                Component invTitle = blockStateMeta.hasDisplayName() ? blockStateMeta.displayName() : main.defaultName;
 
                 Inventory inv = Bukkit.createInventory(null, InventoryType.SHULKER_BOX, invTitle);
                 inv.setContents(shulker.getInventory().getContents());
