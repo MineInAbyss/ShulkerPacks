@@ -1,5 +1,7 @@
 package me.darkolythe.shulkerpacks;
 
+import com.destroystokyo.paper.MaterialTags;
+import io.papermc.paper.event.block.BlockPreDispenseEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -28,6 +30,12 @@ public class ShulkerListener implements Listener {
 
     public ShulkerListener(ShulkerPacks plugin) {
         this.main = plugin; //set it equal to an instance of main
+    }
+
+    @EventHandler
+    public void onDispense(BlockPreDispenseEvent event) {
+        ItemStack itemStack = event.getItemStack();
+        if (MaterialTags.SHULKER_BOXES.isTagged(itemStack)) event.setCancelled(true);
     }
 
     /*
