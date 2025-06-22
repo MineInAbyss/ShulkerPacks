@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ShulkerListener implements Listener {
 
@@ -55,21 +56,27 @@ public class ShulkerListener implements Listener {
     @EventHandler
     public void onInventoryMoveItem(InventoryMoveItemEvent event) {
         List<Player> closeInventories = new ArrayList<>();
+        Location location = event.getInitiator().getLocation();
+        ItemStack itemStack = event.getItem();
 
         for (Player p : ShulkerPacks.openShulkers.keySet()) {
-            if (ShulkerPacks.openShulkers.get(p).isSimilar(event.getItem())) {
+            if (ShulkerPacks.openShulkers.get(p).isSimilar(itemStack)) {
                 closeInventories.add(p);
             }
         }
 
         for (Player p : closeInventories) {
-            if (event.getInitiator().getLocation() != null && event.getInitiator().getLocation().getWorld() == p.getWorld()) {
-                if (event.getInitiator().getLocation().distance(p.getLocation()) < 6) {
-                    p.closeInventory();
-                }
+            if (location != null && location.getWorld() == p.getWorld() && location.distance(p.getLocation()) < 6) {
+                p.closeInventory();
             }
         }
     }
+
+    private static final Set<InventoryType> BLOCKED_INV_TYPES = Set.of(
+            InventoryType.CRAFTER, InventoryType.WORKBENCH, InventoryType.ANVIL, InventoryType.GRINDSTONE,
+            InventoryType.CARTOGRAPHY, InventoryType.BEACON, InventoryType.MERCHANT,
+            InventoryType.ENCHANTING, InventoryType.LOOM, InventoryType.STONECUTTER
+    );
 
     /*
     Opens the shulker if its not in a weird inventory, then saves it
@@ -102,15 +109,12 @@ public class ShulkerListener implements Listener {
         }
 
         // prevent the player from opening it in a chest if they have no permission
-        if (clickedInventory.getType() == InventoryType.CHEST && !main.canOpenInChests || !player.hasPermission("shulkerpacks.open_in_chests"))
+        InventoryType type = clickedInventory.getType();
+        if (type == InventoryType.CHEST && !main.canOpenInChests || !player.hasPermission("shulkerpacks.open_in_chests"))
             return;
 
         // prevent the player from opening the shulkerbox in inventories without storage slots
-        String typeStr = clickedInventory.getType().toString();
-        InventoryType type = clickedInventory.getType();
-        if (typeStr.equals("CRAFTER") || typeStr.equals("WORKBENCH") || typeStr.equals("ANVIL") || typeStr.equals("BEACON") || typeStr.equals("MERCHANT") || typeStr.equals("ENCHANTING") ||
-                typeStr.equals("GRINDSTONE") || typeStr.equals("CARTOGRAPHY") || typeStr.equals("LOOM") || typeStr.equals("STONECUTTER"))
-            return;
+        if (BLOCKED_INV_TYPES.contains(type)) return;
 
         // prevent the player from opening it in the crafting slots of their inventory
         if (type == InventoryType.CRAFTING && event.getRawSlot() >= 1 && event.getRawSlot() <= 4) return;
@@ -137,7 +141,7 @@ public class ShulkerListener implements Listener {
         if (!main.shiftClickToOpen || event.isShiftClick()) {
             boolean isCancelled = event.isCancelled();
             event.setCancelled(true);
-            if (event.isRightClick() && openInventoryIfShulker(event.getCurrentItem(), player)) {
+            if (event.isRightClick() && openInventoryIfShulker(currentItem, player)) {
                 main.fromHand.remove(player);
                 return;
             }
